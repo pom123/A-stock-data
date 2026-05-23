@@ -1,0 +1,16 @@
+# Data files
+*.json
+!skills/**/*.json
+
+# Temp files
+*.txt
+out.txt
+output.txt
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db

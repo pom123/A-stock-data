@@ -1,8 +1,8 @@
 # a-stock-data
 
-A 股全栈数据工具包 — 6 层架构 · 21 个端点 · 8 个数据源实测
+A 股全栈数据工具包 — 10 层架构 · 29 个端点 · 11 个数据源实测
 
-一个自包含的 Skill 文件，把分散在 8 个数据源里的 A 股原始数据整合成 AI 编程助手直接能用的工具集。你不用再背 mootdx 的 K 线参数、东财的 PDF Referer 头、iwencai 的 X-Claw 鉴权、百度 PAE 的 Header 拼接——全部封装好了。
+一个自包含的 Skill 文件，把分散在 11 个数据源里的 A 股原始数据整合成 AI 编程助手直接能用的工具集。你不用再背 mootdx 的 K 线参数、东财的 PDF Referer 头、iwencai 的 X-Claw 鉴权、百度 PAE 的 Header 拼接——全部封装好了。
 
 > 兼容 [Claude Code](https://github.com/anthropics/claude-code) · [Codex](https://github.com/openai/codex) · [OpenClaw](https://github.com/anthropics/openclaw)
 >
@@ -29,15 +29,19 @@ A 股全栈数据工具包 — 6 层架构 · 21 个端点 · 8 个数据源实�
 ## 架构
 
 ```
-A 股全栈数据 · 六层架构
+A 股全栈数据 · 十层架构
 │
-├── 行情层    mootdx + 腾讯财经       K线 + 五档盘口 + PE/PB/市值/换手率
-├── 研报层    东财 + akshare + iwencai 研报列表 / PDF下载 / 一致预期 / NL搜索
-├── 信号层    同花顺 + 百度股市通      强势股 + 题材归因 + 北向资金 + 概念板块
-│            + akshare + 东财DC      + 资金流向 + 龙虎榜 + 全市场龙虎榜 + 解禁 + 行业对比
-├── 新闻层    akshare × 3             个股新闻 / 财联社快讯 / 全球资讯
-├── 基础数据  mootdx finance / F10    37字段季报 + 9类公司资料
-└── 公告层    巨潮 cninfo + mootdx    沪深北全量公告
+├── 行情层      mootdx + 腾讯财经        K线 + 五档盘口 + PE/PB/市值/换手率/涨跌停
+├── 研报层      东财 + akshare + iwencai  研报列表 / PDF下载 / 一致预期 / NL搜索
+├── 信号层      同花顺 + 百度股市通       强势股 + 题材归因 + 北向资金 + 概念板块
+│              + akshare + 东财DC       + 资金流向 + 龙虎榜 + 全市场龙虎榜 + 解禁 + 行业对比
+├── 新闻层      akshare × 3              个股新闻 / 财联社快讯 / 全球资讯
+├── 基础数据    mootdx finance / F10     37字段季报 + 9类公司资料
+├── 财务趋势层  同花顺 + 东财             近3年营收/净利/增速/ROE/毛利率 + 80+字段深度分析 (V2.2)
+├── 技术面层    mootdx K线 + stockstats  MA5/10/20/60/120 + MACD/RSI/BOLL + 趋势信号 (V2.2)
+├── 筹码分布层  mootdx K线 + 指数衰减     获利盘/套牢盘/平均成本/90%集中区/抛压支撑 + 资金流向 (V2.3)
+├── 行业估值层  同花顺行业 + 腾讯批量      同行PE/PB均值/中位数/个股排名 (V2.2)
+└── 公告层      巨潮 cninfo + mootdx     沪深北全量公告
 ```
 
 ---
@@ -56,6 +60,9 @@ curl -o ~/.claude/skills/a-stock-data/SKILL.md \
 
 # 3. 安装依赖
 pip install mootdx akshare requests pandas stockstats
+
+# 4. (可选) 验证环境
+python check_env.py
 ```
 
 启动 Claude Code，说一句「帮我看看 688017 的估值」，自动激活。
@@ -64,14 +71,14 @@ pip install mootdx akshare requests pandas stockstats
 
 ---
 
-## 21 个端点能力清单
+## 29 个端点能力清单
 
 ### 行情层（实时，不封 IP）
 
 | 端点 | 数据 |
 |------|------|
 | mootdx 行情 | K线(多周期) + 五档盘口 + 逐笔成交 + 实时报价 46 字段 |
-| 腾讯财经 | PE(TTM) / PB / 总市值 / 流通市值 / 换手率 / 涨跌停价 |
+| 腾讯财经 | PE(TTM) / PB / 总市值 / 流通市值 / 换手率 / 涨跌停价 / 量比 |
 
 ### 研报层
 
@@ -89,12 +96,12 @@ pip install mootdx akshare requests pandas stockstats
 | 同花顺热点 | 当日强势股 + 题材归因 reason tags（编辑部人工标注） |
 | 同花顺北向（实时） | 沪股通 / 深股通分钟级流向（262 个时间点） |
 | 同花顺北向（历史） | 本地自缓存日级历史（V2.1 改） |
-| **百度概念板块** | 行业 / 概念 / 地域三维归属 + 当日涨跌幅（V2.1 新增） |
-| **百度资金流向** | 主力 / 散户 / 超大单分钟级 + 20 日历史（V2.1 新增） |
-| **龙虎榜席位** | 上榜记录 + 买卖席位 TOP5 + 机构动向（V2.1 新增） |
-| **全市场龙虎榜** | 每日全市场上榜股票 + 净买额排名 + 上榜原因（V2.1 新增） |
-| **限售解禁日历** | 历史解禁 + 未来 90 天待解禁预警（V2.1 新增） |
-| **行业横向对比** | 同花顺 90 行业涨跌排名 + 领涨股（V2.1 新增） |
+| 百度概念板块 | 行业 / 概念 / 地域三维归属 + 当日涨跌幅（V2.1 新增） |
+| 百度资金流向 | 主力 / 散户 / 超大单分钟级 + 20 日历史（V2.1 新增） |
+| 龙虎榜席位 | 上榜记录 + 买卖席位 TOP5 + 机构动向（V2.1 新增） |
+| 全市场龙虎榜 | 每日全市场上榜股票 + 净买额排名 + 上榜原因（V2.1 新增） |
+| 限售解禁日历 | 历史解禁 + 未来 90 天待解禁预警（V2.1 新增） |
+| 行业横向对比 | 同花顺 90 行业涨跌排名 + 领涨股（V2.1 新增） |
 
 ### 新闻层
 
@@ -112,9 +119,38 @@ pip install mootdx akshare requests pandas stockstats
 | F10 公司资料 | 9 大类文本（V2.1 截断优化，-70% token） |
 | 巨潮公告 | 沪深北交所全量公告 |
 
+### 财务趋势层（V2.2 新增）
+
+| 端点 | 数据 |
+|------|------|
+| 同花顺财务摘要 | 近3年营收/净利/增速/ROE/毛利率多期趋势 |
+| 东财财务指标 | 80+字段深度分析（周转率/偿债/现金流/资产结构） |
+| 东财业绩报表 | 单季EPS/营收/净利/同比/环比 |
+
+### 技术面层（V2.2 新增）
+
+| 端点 | 数据 |
+|------|------|
+| MA均线 | MA5/10/20/60/120 + 多头/空头排列判断 |
+| MACD/RSI/BOLL | 金叉/死叉信号 + 超买超卖 + 布林带 |
+
+### 筹码分布层（V2.3 新增）
+
+| 端点 | 数据 |
+|------|------|
+| 筹码分布计算 | 获利盘/套牢盘/平均成本/90%集中区/上方抛压/下方支撑/筹码分布图 |
+| 资金流向聚合 | 主力/超大单/大单 5/10/20日净流入趋势 |
+| 筹码+资金联合 | 双维度综合研判信号 |
+
+### 行业估值对比层（V2.2 新增）
+
+| 端点 | 数据 |
+|------|------|
+| 同行业PE/PB对比 | 行业均值/中位数 + 个股排名 + 相对偏离度 |
+
 ### 鉴权要求
 
-7 个数据源**完全免费无 Key**，仅 iwencai 语义搜索需要 API Key（[申请地址](https://www.iwencai.com/skillhub)）。
+10 个数据源**完全免费无 Key**，仅 iwencai 语义搜索需要 API Key（[申请地址](https://www.iwencai.com/skillhub)）。
 
 ---
 
@@ -136,6 +172,11 @@ pip install mootdx akshare requests pandas stockstats
 | 行业轮动 | 「今天哪些行业涨幅最大，资金在流入哪些板块」 |
 | 新闻公告 | 「拉一下 300476 最近的新闻和公告」 |
 | 批量对比 | 「帮我对比这 5 只半导体股的估值」 |
+| 财务趋势 | 「000537 近3年营收和净利润趋势怎么样」 |
+| 技术面 | 「000537 现在技术面怎么样，MACD和均线如何」 |
+| 行业估值 | 「000537 在电力行业里PE算贵还是便宜」 |
+| 筹码分布 | 「002281 筹码分布怎么样，获利盘多少，上方抛压重不重」 |
+| 筹码+资金 | 「帮我分析下002281的筹码和资金流向」 |
 
 ### 内置 4 套调研流程
 
@@ -144,22 +185,18 @@ pip install mootdx akshare requests pandas stockstats
 | 单票估值 | 实时价 → 一致预期 EPS → 前向 PE / PEG / PE 消化年数 | 30 秒 |
 | 批量对比 | 多只股票横向估值排列 | 1 分钟 |
 | 主题研报 | iwencai 多关键词 NL 搜索 + 东财 PDF 交叉补充 | 2 分钟 |
-| 新标的调研 | 机构覆盖 → 估值 → 概念板块 → 资金流向 → 龙虎榜 → 解禁预警 | 1 分钟 |
+| 新标的调研 | 机构覆盖 → 估值 → 财务趋势 → 技术面 → 筹码 → 行业对比 → 概念板块 → 资金流向 → 龙虎榜 → 解禁预警 | 1 分钟 |
 
 ---
 
-## V2.1 新增亮点
+## 版本演进
 
-| 功能 | 说明 |
-|------|------|
-| 龙虎榜席位 | 上榜原因 + 买卖营业部 TOP5 + 机构买卖统计 |
-| 全市场龙虎榜 | 每日全市场上榜股票 + 净买额排名 + 上榜原因 |
-| 限售解禁 | 历史全部解禁批次 + 未来 90 天待解禁预警 |
-| 行业横向 | 同花顺 ~90 行业涨跌排名 + 成交额 + 领涨股 |
-| 概念板块 | 百度股市通三维归属（行业/概念/地域） |
-| 资金流向 | 分钟级主力/散户/超大单 + 20 日历史 |
-| 北向自缓存 | eastmoney 断供后改本地积累，越跑越丰富 |
-| F10 截断 | 股东研究 -70% token（19969→5906 chars） |
+| 版本 | 新增能力 |
+|------|---------|
+| V2.3 | 筹码分布层（获利盘/套牢盘/平均成本/抛压支撑/筹码分布图 + 资金流向聚合） |
+| V2.2 | 财务趋势层 + 技术面层 + 行业估值对比层 |
+| V2.1 | 龙虎榜席位 + 全市场龙虎榜 + 限售解禁 + 行业横向 + 百度概念板块 + 百度资金流向 + 北向自缓存 + F10截断 |
+| V1.0 | 行情层 + 研报层 + 信号层 + 新闻层 + 基础数据层 + 公告层 |
 
 ---
 
@@ -175,6 +212,9 @@ pip install mootdx akshare requests pandas stockstats
 | 6 | 同花顺热点 | HTTP | 极低（零鉴权） |
 | 7 | 同花顺北向 | HTTP | 极低（零鉴权） |
 | 8 | 百度股市通 | HTTP | 极低（零鉴权） |
+| 9 | 同花顺 THS | HTTP | 极低 |
+| 10 | stockstats | 本地计算 | 无 |
+| 11 | 筹码分布算法 | 本地计算 | 无 |
 
 ---
 
@@ -203,6 +243,9 @@ mootdx 走 TCP 直连通达信行情服务器，需国内 IP 才稳定。海外�
 
 **Q: 北向资金历史只有几天？**
 V2.1 改为本地自缓存。每次调用自动积累，越跑越丰富。首次运行只有当天数据。
+
+**Q: 筹码分布准确吗？**
+采用"指数衰减+日内均匀分布"近似算法（60日半衰期），与通达信结果在大方向一致（获利盘误差通常<5%），但具体价位占比可能有差异。半衰期可调：短线30天，长线90天。
 
 **Q: 不用 Claude Code，能用吗？**
 能。SKILL.md 本质是 Markdown + 内嵌 Python 代码。Codex、OpenClaw 或任何 AI 编程助手都能读取。你也可以直接把 Python 代码段复制出来在自己的脚本里跑。
@@ -234,9 +277,9 @@ V2.1 改为本地自缓存。每次调用自动积累，越跑越丰富。首次
 
 # a-stock-data
 
-Full-stack data toolkit for China A-Share market — 6-layer architecture · 21 endpoints · 8 data sources, battle-tested
+Full-stack data toolkit for China A-Share market — 10-layer architecture · 29 endpoints · 11 data sources, battle-tested
 
-A self-contained Skill file that consolidates raw A-share data from 8 sources into a ready-to-use toolkit for AI coding assistants. No need to memorize mootdx candlestick parameters, Eastmoney PDF Referer headers, iwencai X-Claw authentication, or Baidu PAE header assembly — it's all handled.
+A self-contained Skill file that consolidates raw A-share data from 11 sources into a ready-to-use toolkit for AI coding assistants. No need to memorize mootdx candlestick parameters, Eastmoney PDF Referer headers, iwencai X-Claw authentication, or Baidu PAE header assembly — it's all handled.
 
 > Compatible with [Claude Code](https://github.com/anthropics/claude-code) · [Codex](https://github.com/openai/codex) · [OpenClaw](https://github.com/anthropics/openclaw)
 >
@@ -247,15 +290,19 @@ A self-contained Skill file that consolidates raw A-share data from 8 sources in
 ## Architecture
 
 ```
-China A-Share Full-Stack Data · 6-Layer Architecture
+China A-Share Full-Stack Data · 10-Layer Architecture
 │
-├── Market Data    mootdx + Tencent Finance     Candlesticks + Level-2 Order Book + PE/PB/Market Cap/Turnover
-├── Research       Eastmoney + akshare + iwencai Report list / PDF download / Consensus EPS / NL search
-├── Signals        THS + Baidu + akshare         Hot stocks + Sector attribution + Northbound flow
-│                                                + Concept blocks + Fund flow + Dragon Tiger + Daily DT (full market) + Lockup + Industry
-├── News           akshare × 3                   Stock news / CLS flash / Global finance
-├── Fundamentals   mootdx finance / F10          37-field quarterly report + 9 categories of company data
-└── Filings        cninfo + mootdx               Full filings across SSE / SZSE / BSE
+├── Market Data        mootdx + Tencent Finance     Candlesticks + Order Book + PE/PB/Market Cap/Limits
+├── Research           Eastmoney + akshare + iwencai Report list / PDF download / Consensus EPS / NL search
+├── Signals            THS + Baidu + akshare + EM    Hot stocks + Attribution + Northbound + Concepts
+│                                                  + Fund flow + Dragon Tiger + Lockup + Industry
+├── News               akshare × 3                   Stock news / CLS flash / Global finance
+├── Fundamentals       mootdx finance / F10          37-field quarterly + 9 categories company data
+├── Financial Trend    THS + Eastmoney               3yr revenue/profit/ROE/margin trends + 80+ deep metrics (V2.2)
+├── Technical          mootdx + stockstats            MA5/10/20/60/120 + MACD/RSI/BOLL + trend signals (V2.2)
+├── Chip Distribution  mootdx + decay algorithm      Profit/loss % / avg cost / 90% range / pressure/support + fund flow (V2.3)
+├── Industry Valuation THS industry + Tencent batch   Peer PE/PB mean/median + ranking + deviation (V2.2)
+└── Filings            cninfo + mootdx               Full filings across SSE / SZSE / BSE
 ```
 
 ---
@@ -274,6 +321,9 @@ curl -o ~/.claude/skills/a-stock-data/SKILL.md \
 
 # 3. Install dependencies
 pip install mootdx akshare requests pandas stockstats
+
+# 4. (Optional) Verify environment
+python check_env.py
 ```
 
 Launch Claude Code and say "Check the valuation of 688017" — the skill activates automatically.
@@ -282,117 +332,14 @@ Launch Claude Code and say "Check the valuation of 688017" — the skill activat
 
 ---
 
-## 20 Endpoints
+## Version History
 
-### Market Data (real-time, no IP ban)
-
-| Endpoint | Data |
-|----------|------|
-| mootdx Market Data | Candlesticks (multi-period) + Level-2 order book + tick-by-tick + 46-field quote |
-| Tencent Finance | PE(TTM) / PB / Market Cap / Float Cap / Turnover / Price Limits |
-
-### Research Reports
-
-| Endpoint | Data |
-|----------|------|
-| Eastmoney reportapi | Report list + ratings + 3-year EPS forecasts |
-| Eastmoney PDF | Full research report PDF (Referer auth handled) |
-| akshare Consensus | Institutional consensus EPS (THS source) |
-| iwencai NL Search | Natural language cross-topic report search |
-
-### Signals (V2.1 Major Expansion)
-
-| Endpoint | Data |
-|----------|------|
-| THS Hot Stocks | Today's strong stocks + sector attribution tags (editorial annotations) |
-| THS Northbound (real-time) | Shanghai/Shenzhen Connect minute-level flow (262 data points) |
-| THS Northbound (historical) | Local self-cached daily history (V2.1 change) |
-| **Baidu Concept Blocks** | Industry / Concept / Region classification + daily change (V2.1 new) |
-| **Baidu Fund Flow** | Institutional / Retail / Super-large order minute-level + 20-day history (V2.1 new) |
-| **Dragon Tiger Board** | Appearance records + Top 5 buy/sell brokerages + institutional activity (V2.1 new) |
-| **Daily Dragon Tiger (Full Market)** | All stocks on daily board + net buy ranking + appearance reasons (V2.1 new) |
-| **Lockup Expiry Calendar** | Historical releases + 90-day upcoming expiry alerts (V2.1 new) |
-| **Industry Comparison** | THS ~90 industries ranked by change + volume + leaders (V2.1 new) |
-
-### News
-
-| Endpoint | Data |
-|----------|------|
-| Stock News | Eastmoney per-stock news feed |
-| CLS Flash | Minute-level telegrams |
-| Global News | Eastmoney global finance news |
-
-### Fundamentals + Filings
-
-| Endpoint | Data |
-|----------|------|
-| Quarterly Snapshot | 37 fields (EPS / ROE / Net Profit / Revenue...) |
-| F10 Company Data | 9 categories (V2.1 truncation optimization, -70% tokens) |
-| cninfo Filings | Full filings across all exchanges |
-
-### Authentication
-
-7 data sources are **completely free, no API key needed**. Only iwencai semantic search requires an API key ([apply here](https://www.iwencai.com/skillhub)).
-
----
-
-## Usage Examples
-
-Just tell your AI assistant:
-
-| Scenario | Prompt |
-|----------|--------|
-| Valuation | "Estimate 688017 — give me PE / PEG / payback period" |
-| Sector Attribution | "Which stocks are strong today and what sectors are driving them" |
-| Research Reports | "Latest reports on humanoid robot supply chain, especially ball screws and reducers" |
-| Northbound Flow | "How's northbound capital flow looking today" |
-| Concept Blocks | "What concept sectors does 688017 belong to" |
-| Fund Flow | "Is institutional money flowing into or out of 000858 today" |
-| Dragon Tiger Board | "Has 002475 appeared on the dragon tiger board recently, which brokerages are buying" |
-| Daily Dragon Tiger | "Which stocks had the highest net buy on today's dragon tiger board" |
-| Lockup Expiry | "Any lockup expiries coming up in the next 3 months for this stock" |
-| Industry Rotation | "Which industries are up the most today, where is money flowing" |
-| News & Filings | "Pull recent news and filings for 300476" |
-| Batch Compare | "Compare valuations of these 5 semiconductor stocks" |
-
-### 4 Built-in Research Workflows
-
-| Workflow | What it does | Time |
-|----------|-------------|------|
-| Single Stock Valuation | Live price → Consensus EPS → Forward PE / PEG / PE payback years | 30 sec |
-| Batch Comparison | Side-by-side valuation ranking | 1 min |
-| Thematic Research | iwencai multi-keyword NL search + Eastmoney PDF cross-reference | 2 min |
-| New Target Research | Coverage → Valuation → Concepts → Fund flow → Dragon tiger → Lockup alert | 1 min |
-
----
-
-## V2.1 Highlights
-
-| Feature | Description |
-|---------|-------------|
-| Dragon Tiger Board | Appearance reasons + Top 5 buy/sell brokerages + institutional stats |
-| Daily Dragon Tiger (Full Market) | All stocks on daily board + net buy ranking + appearance reasons |
-| Lockup Expiry | Full release history + 90-day upcoming expiry alerts |
-| Industry Comparison | ~90 THS industries ranked by change + volume + leaders |
-| Concept Blocks | Baidu 3D classification (industry/concept/region) |
-| Fund Flow | Minute-level institutional/retail/super-large orders + 20-day history |
-| Northbound Self-Cache | After Eastmoney data cutoff, local accumulation — richer over time |
-| F10 Truncation | Shareholder research -70% tokens (19969→5906 chars) |
-
----
-
-## Data Source Priority
-
-| Priority | Source | Protocol | IP Ban Risk |
-|----------|--------|----------|-------------|
-| 1 | mootdx | TCP (7709) | Very low |
-| 2 | Tencent Finance | HTTP | Low |
-| 3 | akshare | Python | Medium (Eastmoney source) |
-| 4 | iwencai | OpenAPI | Low (key required) |
-| 5 | Eastmoney PDF | HTTP | Low |
-| 6 | THS Hot Stocks | HTTP | Very low (zero auth) |
-| 7 | THS Northbound | HTTP | Very low (zero auth) |
-| 8 | Baidu Finance | HTTP | Very low (zero auth) |
+| Version | New Capabilities |
+|---------|-----------------|
+| V2.3 | Chip distribution layer (profit/loss %, avg cost, pressure/support + fund flow aggregation) |
+| V2.2 | Financial trend layer + Technical analysis layer + Industry valuation comparison |
+| V2.1 | Dragon Tiger + Full market DT + Lockup + Industry comparison + Baidu concepts/funds + Northbound cache + F10 truncation |
+| V1.0 | Market data + Research + Signals + News + Fundamentals + Filings |
 
 ---
 

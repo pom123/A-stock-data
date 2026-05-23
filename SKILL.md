@@ -1,18 +1,22 @@
 ---
 name: a-stock-data
-description: A股全栈数据工具包 — 覆盖行情(mootdx+腾讯)、研报(东财+iwencai)、信号(同花顺热点+北向+百度PAE+龙虎榜+解禁+行业)、新闻(akshare)、基础数据(mootdx财务/F10)、公告(巨潮)六层数据源，内嵌全部调用代码，自包含零依赖外部文件。适用于个股估值、研报检索、题材归因、龙虎榜跟踪、解禁预警、行业轮动、产业链调研、批量筛选等场景。
+description: A股全栈数据工具包 — 覆盖行情(mootdx+腾讯)、研报(东财+iwencai)、信号(同花顺热点+北向+百度PAE+龙虎榜+解禁+行业)、新闻(akshare)、基础数据(mootdx财务/F10)、财务趋势(同花顺多期)、技术面(MA/MACD/RSI/BOLL)、筹码分布(获利盘/套牢盘/平均成本/抛压支撑)、行业估值对比(同花顺行业+腾讯批量)、公告(巨潮)十层数据源，内嵌全部调用代码，自包含零依赖外部文件。适用于个股估值、研报检索、题材归因、龙虎榜跟踪、解禁预警、行业轮动、产业链调研、批量筛选、财务趋势分析、技术面判断、筹码分布分析等场景。
 origin: custom
-version: 2.1
+version: 2.3
 ---
 
 > 📦 项目主页：https://github.com/simonlin1212/a-stock-data — 更新、反馈、支持作者
 > 
 > 作者：Simon 林 · 抖音「Simon林」· 公众号「硅基世纪」
 
-# A股全栈数据工具包 V2.1
+# A股全栈数据工具包 V2.3
 
-六层数据架构，21 个端点，全部实测可用（2026-05-12 验证，覆盖主板/中小板/科创板/ST）。
+十层数据架构，29 个端点，全部实测可用（2026-05-13 验证，覆盖主板/中小板/科创板/ST）。
 
+> **V2.3 新增**：筹码分布层（mootdx K线 + 指数衰减算法 → 获利盘/套牢盘/平均成本/90%集中区/上方抛压/下方支撑/筹码分布图 + akshare资金流向聚合）
+>
+> **V2.2 新增**：财务趋势层（近3年营收/净利/增速/ROE/毛利率趋势）+ 技术面层（MA均线/MACD/RSI/BOLL）+ 同行业PE/PB估值对比（同花顺行业成分 + 腾讯批量行情）
+>
 > **V2.1 新增**：龙虎榜席位 + 全市场龙虎榜 + 限售解禁日历 + 行业横向对比 + 百度股市通（概念板块 / 资金流向）+ 北向自缓存 + F10 截断优化
 
 **使用方式：** 将本文件放入 `~/.claude/skills/a-stock-data/SKILL.md`，Claude Code 会自动识别并在 A 股相关对话中激活。
@@ -46,6 +50,26 @@ version: 2.1
 ├── mootdx F10     → 公司资料 (9大类文本, V2.1 截断优化)
 └── akshare        → 个股基本面 (stock_individual_info_em)
 
+财务趋势层（V2.2 新增）
+├── 同花顺财务摘要 → 近3年营收/净利/增速/ROE/毛利率多期趋势 (stock_financial_abstract_ths)
+├── 东财财务指标   → 80+字段深度分析 (stock_financial_analysis_indicator)
+└── 东财业绩报表   → 单季EPS/营收/净利/同比/环比 (stock_yjbb_em)
+
+技术面层（V2.2 新增）
+├── mootdx K线     → 120根日K原始数据 (TCP)
+└── stockstats     → MA5/10/20/60/120 + MACD/RSI/BOLL 计算
+
+筹码分布层（V2.3 新增）
+├── mootdx K线     → 250根日K原始数据 (TCP)
+├── 指数衰减算法   → 60日半-life衰减 + 日内均匀分布 → 筹码分布图
+├── akshare        → 主力/超大单/大单资金流向 (stock_individual_fund_flow)
+└── 聚合输出       → 获利盘% / 套牢盘% / 平均成本 / 90%集中区 / 上方抛压 / 下方支撑 / 筹码分布图 / 5-20日资金流向
+
+行业估值对比层（V2.2 新增）
+├── 同花顺行业列表 → 90行业名称+代码 (stock_board_industry_name_ths)
+├── 同花顺行业信息 → 板块涨幅/资金净流入/涨跌家数 (stock_board_industry_info_ths)
+└── 腾讯批量行情   → 同行业个股PE/PB → 算行业均值/中位数/排名
+
 公告层
 ├── 巨潮 cninfo    → 公告全文 (akshare封装)
 └── mootdx F10     → 最新公告摘要
@@ -67,7 +91,34 @@ version: 2.1
 - 用户要看新闻资讯（个股新闻 / 财联社快讯 / 全球资讯）
 - 用户要查公告（巨潮公告全文）
 - 用户要做产业链调研 / 批量横向对比
-- 关键词：估值、一致预期、机构预测、市盈率、PEG、市值、研报、产业链、行业研究、K线、盘口、公告、新闻、**强势股、题材、热点、概念归因、北向资金、沪股通、深股通、概念板块、资金流向、主力、龙虎榜、席位、营业部、全市场龙虎榜、净买入、解禁、限售、行业对比、行业轮动**
+- 用户要看**财务趋势**（近3年营收/净利/增速/ROE/毛利率）
+- 用户要看**技术面**（均线MA/MACD/RSI/BOLL/买卖时机）
+- 用户要做**同行业估值对比**（行业PE/PB均值/中位数/个股排名）
+- 用户要看**筹码分布**（获利盘/套牢盘/平均成本/上方抛压/下方支撑/筹码分布图）
+- 用户要看**筹码+资金联合分析**（筹码面+主力资金流向双维度评估）
+- 关键词：估值、一致预期、机构预测、市盈率、PEG、市值、研报、产业链、行业研究、K线、盘口、公告、新闻、**强势股、题材、热点、概念归因、北向资金、沪股通、深股通、概念板块、资金流向、主力、龙虎榜、席位、营业部、全市场龙虎榜、净买入、解禁、限售、行业对比、行业轮动、财务趋势、营收、净利润、增速、ROE、毛利率、均线、MACD、RSI、BOLL、买卖时机、技术面、筹码、筹码分布、获利盘、套牢盘、平均成本、抛压、支撑位**
+
+### 快捷使用场景
+
+| 场景 | 说什么 |
+|------|--------|
+| 个股估值 | 「帮我估一下 688017，给我 PE / PEG / 消化时间」 |
+| 题材归因 | 「今天哪些股票走强，主要是什么题材」 |
+| 研报检索 | 「人形机器人产业链最近的研报，特别是丝杠和减速器」 |
+| 北向资金 | 「今天北向资金流入流出怎么样」 |
+| 概念板块 | 「688017 属于哪些概念板块」 |
+| 资金流向 | 「000858 今天主力资金流入还是流出」 |
+| 龙虎榜 | 「002475 最近上过龙虎榜吗，哪些营业部在买」 |
+| 全市场龙虎榜 | 「今天龙虎榜哪些票净买入最多」 |
+| 解禁预警 | 「这只股票未来 3 个月有没有限售解禁」 |
+| 行业轮动 | 「今天哪些行业涨幅最大，资金在流入哪些板块」 |
+| 新闻公告 | 「拉一下 300476 最近的新闻和公告」 |
+| 批量对比 | 「帮我对比这 5 只半导体股的估值」 |
+| 财务趋势 | 「000537 近3年营收和净利润趋势怎么样」 |
+| 技术面 | 「000537 现在技术面怎么样，MACD和均线如何」 |
+| 行业估值 | 「000537 在电力行业里PE算贵还是便宜」 |
+| 筹码分布 | 「002281 筹码分布怎么样，获利盘多少，上方抛压重不重」 |
+| 筹码+资金 | 「帮我分析下002281的筹码和资金流向」 |
 
 ---
 
@@ -546,7 +597,825 @@ df = ak.stock_individual_info_em(symbol="688017")
 
 ---
 
-## Layer 5: 公告层
+## Layer 5: 财务趋势层（V2.2 新增）
+
+> **核心价值：** mootdx finance 只返回最近一季快照，无法看趋势。这层补上多期财务数据，判断增长质量。
+
+### 5.1 同花顺财务摘要 — 近3年营收/净利/增速/ROE/毛利率
+
+```python
+import akshare as ak
+
+def financial_trend(code: str, years: int = 3) -> list[dict]:
+    """
+    近 N 年年报财务趋势（营收/净利/增速/ROE/毛利率）。
+    数据源: 同花顺 financial_abstract_ths
+    """
+    df = ak.stock_financial_abstract_ths(symbol=code)
+    if df.empty:
+        return []
+
+    # 筛选年报（12-31），取最近 N 年
+    df_annual = df[df['报告期'].str.contains('12-31')].head(years)
+
+    result = []
+    for _, row in df_annual.iterrows():
+        result.append({
+            "date": row['报告期'],
+            "revenue": row['营业总收入'],           # 如 "36.91亿"
+            "revenue_yoy": row['营业总收入同比增长率'], # 如 "7.60%"
+            "net_profit": row['净利润'],
+            "net_profit_yoy": row['净利润同比增长率'],
+            "deducted_net_profit": row['扣非净利润'],
+            "deducted_yoy": row['扣非净利润同比增长率'],
+            "eps": row['基本每股收益'],
+            "bvps": row['每股净资产'],
+            "ocf_per_share": row['每股经营现金流'],
+            "net_margin": row['销售净利率'],
+            "gross_margin": row['销售毛利率'],
+            "roe": row['净资产收益率'],
+            "roe_diluted": row['净资产收益率-摊薄'],
+            "debt_ratio": row['资产负债率'],
+        })
+    return result
+
+# 用法
+trend = financial_trend("000537", 3)
+for t in trend:
+    print(f"{t['date']}: 营收={t['revenue']} (+{t['revenue_yoy']}) | "
+          f"净利={t['net_profit']} (+{t['net_profit_yoy']}) | "
+          f"ROE={t['roe']} 毛利率={t['gross_margin']}")
+```
+
+#### 财务趋势字段速查
+
+| 字段 | 含义 | 示例 |
+|------|------|------|
+| 营业总收入 | 含税营收 | 36.91亿 |
+| 营业总收入同比增长率 | 营收增速 | 7.60% |
+| 净利润 | 归母净利润 | 9.20亿 |
+| 净利润同比增长率 | 净利增速 | 45.14% |
+| 扣非净利润 | 扣非后净利 | 8.50亿 |
+| 基本每股收益 | EPS | 0.48 |
+| 销售净利率 | 净利率 | 24.9% |
+| 销售毛利率 | 毛利率 | 53.54% |
+| 净资产收益率 | ROE | 5.48% |
+| 每股经营现金流 | 经营质量 | 0.90 |
+| 资产负债率 | 杠杆率 | 68.02% |
+
+> **数据覆盖：** 1993年至今所有年报 + 半年报，共 ~114 行。早期数据部分字段为 `False`（未披露）。
+
+### 5.2 东财财务指标 — 80+字段深度分析
+
+```python
+import akshare as ak
+
+def financial_indicators(code: str, start_year: str = "2023") -> list[dict]:
+    """
+    东财财务分析指标，80+字段深度分析。
+    含: 周转率/偿债能力/现金流/资产结构 等
+    """
+    df = ak.stock_financial_analysis_indicator(symbol=code, start_year=start_year)
+    if df.empty:
+        return []
+    # 关键字段（列名示例，实际80+列）
+    key_cols = ['日期', '摊薄每股收益(元)', '加权每股收益(元)',
+                '每股经营性现金流(元)', '净资产收益率(%)',
+                '销售毛利率(%)', '销售净利率(%)',
+                '应收账款周转率(次)', '存货周转率(次)',
+                '流动比率', '速动比率', '资产负债率(%)']
+    available = [c for c in key_cols if c in df.columns]
+    return df[available].to_dict('records')
+
+# 用法
+indicators = financial_indicators("000537", "2023")
+for ind in indicators:
+    print(f"{ind.get('日期','')}: ROE={ind.get('净资产收益率(%)','')} "
+          f"毛利率={ind.get('销售毛利率(%)','')}")
+```
+
+> **注意：** 此接口较慢（~3秒），字段名含中文和单位，需按实际返回列名取值。
+
+### 5.3 东财业绩报表 — 单季EPS/营收/净利/同比/环比
+
+```python
+import akshare as ak
+
+def quarterly_report(code: str, date: str = "20250331") -> dict:
+    """
+    东财单季业绩报表。
+    date: 报告期 YYYYMMDD
+    """
+    df = ak.stock_yjbb_em(date=date)
+    if df.empty:
+        return {}
+    row = df[df['股票代码'] == code]
+    if row.empty:
+        return {}
+    r = row.iloc[0]
+    return {
+        "code": r['股票代码'],
+        "name": r['股票简称'],
+        "eps": r['每股收益'],
+        "revenue": r['营业总收入-营业总收入'],
+        "revenue_yoy": r['营业总收入-同比增长'],
+        "revenue_qoq": r['营业总收入-季度环比增长'],
+        "net_profit": r['净利润-净利润'],
+        "net_profit_yoy": r['净利润-同比增长'],
+        "net_profit_qoq": r['净利润-季度环比增长'],
+        "bvps": r['每股净资产'],
+        "roe": r['净资产收益率'],
+        "ocf_ps": r['每股经营现金流量'],
+        "gross_margin": r['销售毛利率'],
+        "industry": r['所处行业'],
+    }
+
+# 用法
+report = quarterly_report("000537", "20250331")
+if report:
+    print(f"{report['name']}: EPS={report['eps']} "
+          f"营收同比={report['revenue_yoy']}% 净利同比={report['net_profit_yoy']}%")
+```
+
+> **批量拉多个季度：** 循环调不同 date 即可，如 `["20241231", "20240930", "20240630", "20240331"]`。
+
+---
+
+## Layer 6: 技术面层（V2.2 新增）
+
+> **核心价值：** 用 mootdx K线 + stockstats 计算技术指标，判断买卖时机。
+
+### 6.1 MA均线 + MACD + RSI + BOLL
+
+```python
+from mootdx.quotes import Quotes
+from stockstats import StockDataFrame
+import pandas as pd
+
+def technical_analysis(code: str, offset: int = 120) -> dict:
+    """
+    技术面分析：MA均线 + MACD + RSI + BOLL。
+    offset: K线根数，120≈半年
+    """
+    client = Quotes.factory(market='std')
+    klines = client.bars(symbol=code, category=4, offset=offset)
+    if klines is None or klines.empty:
+        return {}
+
+    df = pd.DataFrame(klines)
+    sdf = StockDataFrame.retype(df)
+
+    # MACD
+    macd_val = sdf['macd'].iloc[-1]
+    signal_val = sdf['macds'].iloc[-1]
+    hist_val = sdf['macdh'].iloc[-1]
+
+    # RSI
+    rsi_val = sdf['rsi_14'].iloc[-1]
+
+    # BOLL
+    boll_ub = sdf['boll_ub'].iloc[-1] if 'boll_ub' in sdf.columns else None
+    boll_lb = sdf['boll_lb'].iloc[-1] if 'boll_lb' in sdf.columns else None
+
+    # MA均线
+    df['ma5'] = df['close'].rolling(5).mean()
+    df['ma10'] = df['close'].rolling(10).mean()
+    df['ma20'] = df['close'].rolling(20).mean()
+    df['ma60'] = df['close'].rolling(60).mean()
+    df['ma120'] = df['close'].rolling(120).mean()
+
+    price = df['close'].iloc[-1]
+
+    # 均线多头/空头排列判断
+    ma_list = [df['ma5'].iloc[-1], df['ma10'].iloc[-1], df['ma20'].iloc[-1], df['ma60'].iloc[-1]]
+    is_bullish_alignment = all(ma_list[i] > ma_list[i+1] for i in range(len(ma_list)-1) if pd.notna(ma_list[i]) and pd.notna(ma_list[i+1]))
+    is_bearish_alignment = all(ma_list[i] < ma_list[i+1] for i in range(len(ma_list)-1) if pd.notna(ma_list[i]) and pd.notna(ma_list[i+1]))
+
+    # MACD金叉/死叉
+    hist_prev = sdf['macdh'].iloc[-2] if len(sdf) > 1 else 0
+    is_golden_cross = hist_prev < 0 and hist_val > 0
+    is_death_cross = hist_prev > 0 and hist_val < 0
+
+    return {
+        "price": round(price, 2),
+        "ma5": round(df['ma5'].iloc[-1], 2) if pd.notna(df['ma5'].iloc[-1]) else None,
+        "ma10": round(df['ma10'].iloc[-1], 2) if pd.notna(df['ma10'].iloc[-1]) else None,
+        "ma20": round(df['ma20'].iloc[-1], 2) if pd.notna(df['ma20'].iloc[-1]) else None,
+        "ma60": round(df['ma60'].iloc[-1], 2) if pd.notna(df['ma60'].iloc[-1]) else None,
+        "ma120": round(df['ma120'].iloc[-1], 2) if pd.notna(df['ma120'].iloc[-1]) else None,
+        "macd": round(macd_val, 4),
+        "macd_signal": round(signal_val, 4),
+        "macd_hist": round(hist_val, 4),
+        "rsi14": round(rsi_val, 2),
+        "boll_ub": round(boll_ub, 2) if boll_ub and pd.notna(boll_ub) else None,
+        "boll_lb": round(boll_lb, 2) if boll_lb and pd.notna(boll_lb) else None,
+        "is_bullish_alignment": is_bullish_alignment,
+        "is_bearish_alignment": is_bearish_alignment,
+        "is_golden_cross": is_golden_cross,
+        "is_death_cross": is_death_cross,
+        "trend_signal": _trend_signal(price, df, is_bullish_alignment, is_bearish_alignment,
+                                       is_golden_cross, is_death_cross, rsi_val),
+    }
+
+def _trend_signal(price, df, is_bull, is_bear, golden, death, rsi) -> str:
+    """综合趋势信号"""
+    signals = []
+    if is_bull:
+        signals.append("均线多头排列(看多)")
+    if is_bear:
+        signals.append("均线空头排列(看空)")
+    if golden:
+        signals.append("MACD金叉(买入信号)")
+    if death:
+        signals.append("MACD死叉(卖出信号)")
+    if rsi > 70:
+        signals.append(f"RSI={rsi:.0f}超买(注意回调)")
+    elif rsi < 30:
+        signals.append(f"RSI={rsi:.0f}超卖(关注反弹)")
+    if price > df['ma20'].iloc[-1]:
+        signals.append("站上20日线")
+    else:
+        signals.append("跌破20日线")
+    return " | ".join(signals) if signals else "中性"
+
+# 用法
+tech = technical_analysis("000537")
+print(f"现价={tech['price']} MA20={tech['ma20']} MA60={tech['ma60']}")
+print(f"MACD={tech['macd']} Signal={tech['macd_signal']} Hist={tech['macd_hist']}")
+print(f"RSI14={tech['rsi14']} BOLL={tech['boll_ub']}/{tech['boll_lb']}")
+print(f"信号: {tech['trend_signal']}")
+```
+
+#### 技术面信号解读
+
+| 信号 | 含义 | 操作建议 |
+|------|------|----------|
+| 均线多头排列 | MA5>MA10>MA20>MA60 | 趋势向上，持股 |
+| 均线空头排列 | MA5<MA10<MA20<MA60 | 趋势向下，观望 |
+| MACD金叉 | DIF上穿DEA | 买入信号 |
+| MACD死叉 | DIF下穿DEA | 卖出信号 |
+| RSI>70 | 超买 | 注意回调风险 |
+| RSI<30 | 超卖 | 关注反弹机会 |
+| 站上/跌破20日线 | 短期趋势分水岭 | 多空分界线 |
+
+> **筹码分布：** 见下方 Layer 6.5 筹码分布层，已实现本地计算（mootdx K线 + 指数衰减算法）。
+
+---
+
+## Layer 6.5: 筹码分布层（V2.3 新增）
+
+> **核心价值：** 通达信/同花顺的筹码分布是客户端本地计算，无公开API。本层用 mootdx K线数据 + 指数衰减算法在本地复现筹码分布，可输出获利盘/套牢盘比例、平均成本、90%筹码集中区、上方抛压位、下方支撑位、筹码分布图。同时聚合 akshare 资金流向数据，一次调用完成"筹码+资金"双维度分析。
+
+### 6.5.1 筹码分布计算（指数衰减算法）
+
+**算法原理：**
+1. 取最近250个交易日K线（mootdx TCP）
+2. 每根K线的成交量均匀分布在当日最高价~最低价区间
+3. 时间衰减：距今天数越远的K线权重越低，半衰期60天（即60天前的成交量权重减半）
+4. 衰减公式：`decay = exp(-ln(2) * days_ago / 60)`
+5. 累加所有价位的衰减后成交量，得到筹码分布
+
+```python
+from mootdx.quotes import Quotes
+import numpy as np
+
+def chip_distribution(code: str, offset: int = 250, half_life: int = 60) -> dict:
+    """
+    筹码分布分析（指数衰减算法）。
+    
+    code: 6位股票代码
+    offset: K线根数，250≈一年
+    half_life: 衰减半衰期（天），默认60
+    
+    返回: {
+        price, avg_cost, deviation_pct, profit_pct, loss_pct,
+        pct90_low, pct90_high, pressure_price, pressure_ratio, above_total,
+        support_price, support_ratio, below_total,
+        chip_chart: [{price, pct}],  # 筹码分布图数据
+        avg_5d, avg_20d, avg_60d, dev_5d, dev_20d, dev_60d,
+    }
+    """
+    client = Quotes.factory(market='std')
+    k = client.bars(symbol=code, category=4, offset=offset)
+    if k is None or k.empty:
+        return {}
+    
+    cp = float(k['close'].iloc[-1])
+    chip = {}
+    td = len(k)
+    
+    for idx in range(td):
+        row = k.iloc[idx]
+        da = td - idx - 1  # 距今天数
+        decay = float(np.exp(-np.log(2) * da / half_life))
+        lo = int(row['low'])
+        hi = int(row['high'])
+        vol = float(row['vol'])
+        nb = max(hi - lo, 1)  # 价格区间内价位数
+        vpb = vol * decay / nb  # 每个价位的衰减成交量
+        for p in range(lo, hi + 1):
+            chip[p] = chip.get(p, 0) + vpb
+    
+    tc = sum(chip.values())  # 总筹码量
+    wa = sum(p * v for p, v in chip.items()) / tc  # 加权平均成本
+    
+    # 获利盘/套牢盘
+    profit_vol = sum(v for p, v in chip.items() if p < cp)
+    profit_pct = profit_vol / tc * 100
+    loss_pct = 100 - profit_pct
+    
+    # 90%筹码集中区
+    cum = 0
+    p5 = p95 = None
+    for p in sorted(chip.keys()):
+        cum += chip[p]
+        if p5 is None and cum / tc >= 0.05:
+            p5 = p
+        if cum / tc >= 0.95:
+            p95 = p
+            break
+    
+    # 上方抛压位（当前价以上最大筹码峰）
+    above = {p: v for p, v in chip.items() if p > int(cp)}
+    below = {p: v for p, v in chip.items() if p < int(cp)}
+    
+    pressure_price = pressure_ratio = above_total = None
+    if above:
+        mp = max(above, key=above.get)
+        above_total = sum(above.values()) / tc * 100
+        pressure_price = mp
+        pressure_ratio = above[mp] / tc * 100
+    
+    # 下方支撑位（当前价以下最大筹码峰）
+    support_price = support_ratio = below_total = None
+    if below:
+        ms = max(below, key=below.get)
+        below_total = sum(below.values()) / tc * 100
+        support_price = ms
+        support_ratio = below[ms] / tc * 100
+    
+    # 筹码分布图数据（价格 vs 占比%）
+    max_vol = max(chip.values())
+    chip_chart = []
+    for bk in sorted(chip.keys()):
+        vol2 = chip[bk]
+        pct = vol2 / tc * 100
+        bar_len = int(vol2 / max_vol * 30)
+        is_current = abs(bk - round(cp)) < 1
+        chip_chart.append({
+            "price": bk,
+            "pct": round(pct, 1),
+            "bar_len": bar_len,
+            "is_current_price": is_current,
+        })
+    
+    # 均价偏离
+    avg_data = {}
+    for days, label in [(5, '5d'), (20, '20d'), (60, '60d')]:
+        tail = k.tail(days)
+        avg = (tail['close'] * tail['vol']).sum() / tail['vol'].sum()
+        dev = (cp / avg - 1) * 100
+        avg_data[f'avg_{label}'] = round(avg, 2)
+        avg_data[f'dev_{label}'] = round(dev, 1)
+    
+    return {
+        "price": round(cp, 2),
+        "avg_cost": round(wa, 2),
+        "deviation_pct": round((cp / wa - 1) * 100, 1),
+        "profit_pct": round(profit_pct, 1),
+        "loss_pct": round(loss_pct, 1),
+        "pct90_low": p5,
+        "pct90_high": p95,
+        "pressure_price": pressure_price,
+        "pressure_ratio": round(pressure_ratio, 1) if pressure_ratio else None,
+        "above_total": round(above_total, 1) if above_total else None,
+        "support_price": support_price,
+        "support_ratio": round(support_ratio, 1) if support_ratio else None,
+        "below_total": round(below_total, 1) if below_total else None,
+        "chip_chart": chip_chart,
+        **avg_data,
+    }
+
+# 用法
+result = chip_distribution("002281")
+print(f"当前价: {result['price']}")
+print(f"平均成本: {result['avg_cost']} (偏离{result['deviation_pct']}%)")
+print(f"获利盘: {result['profit_pct']}%  套牢盘: {result['loss_pct']}%")
+print(f"90%筹码集中区: {result['pct90_low']}~{result['pct90_high']}")
+print(f"上方抛压: {result['pressure_price']}元(占比{result['pressure_ratio']}%) 合计{result['above_total']}%")
+print(f"下方支撑: {result['support_price']}元(占比{result['support_ratio']}%) 合计{result['below_total']}%")
+print(f"5日均价={result['avg_5d']}(偏离{result['dev_5d']}%) 20日均价={result['avg_20d']}(偏离{result['dev_20d']}%)")
+```
+
+#### 打印筹码分布图
+
+```python
+def print_chip_chart(result: dict):
+    """打印终端筹码分布图（价格 vs 筹码占比柱状图）"""
+    if not result or not result.get("chip_chart"):
+        print("无筹码数据")
+        return
+    
+    cp = result['price']
+    print(f"\n筹码分布图（当前价={cp}）：")
+    print("-" * 60)
+    for item in result['chip_chart']:
+        bar = chr(9608) * item['bar_len']
+        marker = " <=" if item['is_current_price'] else ""
+        print("%5d | %5.1f%% | %s%s" % (item['price'], item['pct'], bar, marker))
+    print("-" * 60)
+    print(f"上方抛压位: {result['pressure_price']}元 (占比{result['pressure_ratio']}%) 上方合计{result['above_total']}%")
+    print(f"下方支撑位: {result['support_price']}元 (占比{result['support_ratio']}%) 下方合计{result['below_total']}%")
+
+# 用法
+print_chip_chart(result)
+```
+
+### 6.5.2 资金流向聚合（akshare）
+
+```python
+import akshare as ak
+import pandas as pd
+
+def fund_flow_analysis(code: str, market: str = None, days: list = [5, 10, 20]) -> dict:
+    """
+    个股资金流向分析（主力/超大单/大单净流入趋势）。
+    
+    code: 6位股票代码
+    market: 'sh'/'sz'/None，None则自动判断（6/9开头=sh，其余=sz）
+    days: 统计周期列表
+    
+    返回: {
+        summary: [{period, main_net, super_net, large_net, positive_days, total_days}],
+        detail_5d: [{date, close, change_pct, main_net, super_net, large_net}],
+        detail_20d: [...],
+    }
+    """
+    if market is None:
+        market = 'sh' if code.startswith(('6', '9')) else ('bj' if code.startswith('8') else 'sz')
+    
+    df = ak.stock_individual_fund_flow(stock=code, market=market)
+    df['主力净流入-净额'] = pd.to_numeric(df['主力净流入-净额'], errors='coerce')
+    df['超大单净流入-净额'] = pd.to_numeric(df['超大单净流入-净额'], errors='coerce')
+    df['大单净流入-净额'] = pd.to_numeric(df['大单净流入-净额'], errors='coerce')
+    df['收盘价'] = pd.to_numeric(df['收盘价'], errors='coerce')
+    df['涨跌幅'] = pd.to_numeric(df['涨跌幅'], errors='coerce')
+    
+    # 各周期汇总
+    summary = []
+    for d in days:
+        tail = df.tail(d)
+        main_net = tail['主力净流入-净额'].sum() / 1e8
+        super_net = tail['超大单净流入-净额'].sum() / 1e8
+        large_net = tail['大单净流入-净额'].sum() / 1e8
+        pos_days = (tail['主力净流入-净额'] > 0).sum()
+        summary.append({
+            "period": f"{d}日",
+            "main_net_yi": round(main_net, 2),
+            "super_net_yi": round(super_net, 2),
+            "large_net_yi": round(large_net, 2),
+            "positive_days": int(pos_days),
+            "total_days": len(tail),
+            "signal": "主力净流入" if main_net > 0 else "主力净流出",
+        })
+    
+    # 近5日明细
+    detail_5d = []
+    for _, r in df.tail(5).iterrows():
+        detail_5d.append({
+            "date": str(r['日期']),
+            "close": round(float(r['收盘价']), 2) if pd.notna(r['收盘价']) else None,
+            "change_pct": round(float(r['涨跌幅']), 2) if pd.notna(r['涨跌幅']) else None,
+            "main_net_yi": round(float(r['主力净流入-净额']) / 1e8, 2) if pd.notna(r['主力净流入-净额']) else None,
+            "super_net_yi": round(float(r['超大单净流入-净额']) / 1e8, 2) if pd.notna(r['超大单净流入-净额']) else None,
+            "large_net_yi": round(float(r['大单净流入-净额']) / 1e8, 2) if pd.notna(r['大单净流入-净额']) else None,
+        })
+    
+    # 近20日明细
+    detail_20d = []
+    for _, r in df.tail(20).iterrows():
+        detail_20d.append({
+            "date": str(r['日期']),
+            "close": round(float(r['收盘价']), 2) if pd.notna(r['收盘价']) else None,
+            "change_pct": round(float(r['涨跌幅']), 2) if pd.notna(r['涨跌幅']) else None,
+            "main_net_yi": round(float(r['主力净流入-净额']) / 1e8, 2) if pd.notna(r['主力净流入-净额']) else None,
+            "super_net_yi": round(float(r['超大单净流入-净额']) / 1e8, 2) if pd.notna(r['超大单净流入-净额']) else None,
+            "large_net_yi": round(float(r['大单净流入-净额']) / 1e8, 2) if pd.notna(r['大单净流入-净额']) else None,
+        })
+    
+    return {
+        "summary": summary,
+        "detail_5d": detail_5d,
+        "detail_20d": detail_20d,
+    }
+
+# 用法
+flow = fund_flow_analysis("002281")
+print("=== 资金流向汇总 ===")
+for s in flow['summary']:
+    print(f"  {s['period']}: 主力{s['main_net_yi']}亿 超大单{s['super_net_yi']}亿 大单{s['large_net_yi']}亿 "
+          f"净流入天数={s['positive_days']}/{s['total_days']} → {s['signal']}")
+print("\n=== 近5日资金流向明细 ===")
+for d in flow['detail_5d']:
+    print(f"  {d['date']} 收盘{d['close']} 涨{d['change_pct']}% 主力{d['main_net_yi']}亿 超大单{d['super_net_yi']}亿 大单{d['large_net_yi']}亿")
+```
+
+### 6.5.3 筹码+资金 联合分析（一站式调用）
+
+```python
+def chip_and_fund_analysis(code: str) -> dict:
+    """
+    筹码分布 + 资金流向 联合分析。
+    一次调用完成"筹码面+资金面"双维度评估。
+    
+    返回: {
+        chip: {...},   # chip_distribution 的完整返回
+        fund: {...},   # fund_flow_analysis 的完整返回
+        combined_signal: str,  # 综合研判信号
+    }
+    """
+    chip = chip_distribution(code)
+    fund = fund_flow_analysis(code)
+    
+    if not chip or not fund.get('summary'):
+        return {"error": "数据获取失败"}
+    
+    # 综合信号判断
+    signals = []
+    
+    # 筹码面信号
+    if chip['profit_pct'] > 90:
+        signals.append(f"获利盘{chip['profit_pct']:.0f}%偏高(回吐压力大)")
+    elif chip['profit_pct'] < 30:
+        signals.append(f"获利盘仅{chip['profit_pct']:.0f}%(套牢重)")
+    
+    if chip.get('above_total') and chip['above_total'] < 5:
+        signals.append("上方抛压轻(利于上攻)")
+    elif chip.get('above_total') and chip['above_total'] > 30:
+        signals.append("上方抛压重(阻力大)")
+    
+    if chip.get('deviation_pct') and chip['deviation_pct'] > 30:
+        signals.append(f"偏离成本{chip['deviation_pct']:.0f}%(严重超买)")
+    
+    # 资金面信号
+    for s in fund['summary']:
+        if s['period'] == '5日':
+            if s['main_net_yi'] < -5:
+                signals.append(f"5日主力净流出{s['main_net_yi']:.1f}亿(主力出逃)")
+            elif s['main_net_yi'] > 5:
+                signals.append(f"5日主力净流入{s['main_net_yi']:.1f}亿(主力建仓)")
+    
+    return {
+        "chip": chip,
+        "fund": fund,
+        "combined_signal": " | ".join(signals) if signals else "筹码与资金面中性",
+    }
+
+# 用法
+result = chip_and_fund_analysis("002281")
+print(f"综合信号: {result['combined_signal']}")
+print_chip_chart(result['chip'])
+for s in result['fund']['summary']:
+    print(f"  {s['period']}: 主力{s['main_net_yi']}亿 → {s['signal']}")
+```
+
+#### 筹码分布核心字段速查
+
+| 字段 | 含义 | 示例 |
+|------|------|------|
+| price | 当前价 | 201.55 |
+| avg_cost | 市场加权平均成本 | 70.23 |
+| deviation_pct | 偏离平均成本% | +187.1% |
+| profit_pct | 获利盘比例% | 99.1% |
+| loss_pct | 套牢盘比例% | 0.9% |
+| pct90_low | 90%筹码集中区下沿 | 40 |
+| pct90_high | 90%筹码集中区上沿 | 200 |
+| pressure_price | 上方最大筹码峰价位 | 202 |
+| pressure_ratio | 上方峰值占比% | 0.1% |
+| above_total | 上方合计占比% | 0.8% |
+| support_price | 下方最大筹码峰价位 | 70 |
+| support_ratio | 下方峰值占比% | 4.0% |
+| below_total | 下方合计占比% | 99.1% |
+| avg_5d/20d/60d | 5/20/60日成交量加权均价 | 187.27/140.55/105.73 |
+| dev_5d/20d/60d | 偏离5/20/60日均价% | +7.4%/+43.0%/+90.2% |
+
+#### 筹码分布信号解读
+
+| 信号 | 含义 | 操作建议 |
+|------|------|----------|
+| 获利盘>90% | 大量持仓者浮盈 | 注意获利回吐，不宜追高 |
+| 获利盘<30% | 大量持仓者被套 | 关注超跌反弹，但套牢盘解套有抛压 |
+| 上方合计<5% | 上方抛压极轻 | 利于继续上攻 |
+| 上方合计>30% | 上方抛压沉重 | 上行阻力大，需放量突破 |
+| 偏离成本>50% | 严重偏离平均成本 | 超买风险，均线回归压力大 |
+| 90%集中区窄 | 筹码集中，方向选择在即 | 关注突破方向 |
+| 90%集中区宽 | 筹码分散，持仓成本差异大 | 震荡为主，难有趋势 |
+
+> **算法说明：** 通达信的筹码分布算法未公开，本实现采用"指数衰减+日内均匀分布"近似。半衰期60天可根据需要调整——短线交易者可设30天（更关注近期筹码），长线投资者可设90天（更关注长期持仓成本）。与通达信结果在大方向上一致（获利盘比例误差通常<5%），但具体价位占比可能有差异。
+
+---
+
+## Layer 7: 行业估值对比层（V2.2 新增）
+
+> **核心价值：** 判断个股PE/PB在同行中是贵还是便宜，需要行业均值作参照。
+
+### 7.1 同花顺行业列表 + 行业信息
+
+```python
+import akshare as ak
+
+def find_industry(code: str) -> str | None:
+    """
+    根据股票代码查找其所属的同花顺行业板块名称。
+    先用百度概念板块找行业名，再匹配同花顺90行业。
+    """
+    # 方法1: 从百度概念板块的行业分类中获取
+    blocks = baidu_concept_blocks(code)  # 复用 6.3 的函数
+    if blocks["industry"]:
+        return blocks["industry"][0]["name"]
+
+    # 方法2: 遍历同花顺90行业查找（兜底，较慢）
+    df = ak.stock_board_industry_name_ths()
+    for _, row in df.iterrows():
+        industry_name = row['name']
+        try:
+            info = ak.stock_board_industry_info_ths(symbol=industry_name)
+            # 检查该行业是否包含目标股票（需另外接口）
+        except:
+            continue
+    return None
+
+def industry_info(industry_name: str) -> dict:
+    """
+    同花顺行业板块信息（涨幅/资金净流入/涨跌家数等）。
+    """
+    df = ak.stock_board_industry_info_ths(symbol=industry_name)
+    if df.empty:
+        return {}
+    result = {}
+    for _, row in df.iterrows():
+        result[row['项目']] = row['值']
+    return result
+
+# 用法
+info = industry_info("电力")
+print(f"板块涨幅: {info.get('板块涨幅', 'N/A')}")
+print(f"资金净流入: {info.get('资金净流入(亿)', 'N/A')}亿")
+print(f"涨跌家数: {info.get('涨跌家数', 'N/A')}")
+```
+
+### 7.2 同行业PE/PB估值对比（核心功能）
+
+```python
+import urllib.request
+import akshare as ak
+import pandas as pd
+
+def industry_pe_pb_comparison(code: str, industry_name: str = None, max_stocks: int = 30) -> dict:
+    """
+    同行业PE/PB估值对比。
+    1. 找到同行业个股列表
+    2. 腾讯批量行情拉PE/PB
+    3. 算行业均值/中位数/个股排名
+
+    industry_name: 同花顺行业名（如"电力"），None则自动检测
+    """
+    # 1. 确定行业名
+    if industry_name is None:
+        blocks = baidu_concept_blocks(code)
+        if blocks["industry"]:
+            industry_name = blocks["industry"][0]["name"]
+        else:
+            return {"error": "无法自动检测行业，请手动指定 industry_name"}
+
+    # 2. 拿同行业个股代码（用同花顺行业成分或百度概念）
+    #    同花顺行业成分暂无直接接口，改用百度概念板块中的行业成分
+    #    或手动指定同行业代码列表
+    #    这里用 akshare stock_board_industry_name_ths 获取行业代码
+    #    然后用 stock_board_industry_index_ths 获取成分（该接口返回K线，非个股列表）
+    #    实测最可靠方式: 手动维护常见行业 → 代码列表映射
+    #    或用东财 stock_board_industry_cons_em（但走push2域名，可能被代理拦截）
+
+    # 实用方案: 用百度概念板块的同行股票
+    try:
+        url = (
+            f"https://finance.pae.baidu.com/api/getrelatedblock"
+            f"?code={code}&market=ab&typeCode=all&finClientType=pc"
+        )
+        headers = {
+            "Host": "finance.pae.baidu.com",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/117.0.0.0",
+            "Accept": "application/vnd.finance-web.v1+json",
+            "Origin": "https://gushitong.baidu.com",
+            "Referer": "https://gushitong.baidu.com/",
+        }
+        import requests
+        r = requests.get(url, headers=headers, timeout=10)
+        d = r.json()
+        if str(d.get("ResultCode", -1)) != "0":
+            return {"error": "百度PAE错误"}
+
+        # 从行业分类中提取同行业个股
+        peer_codes = []
+        for block in d.get("Result", []):
+            if "行业" in block.get("type", ""):
+                for item in block.get("list", []):
+                    c = item.get("code", "")
+                    if c and c.isdigit() and len(c) == 6:
+                        peer_codes.append(c)
+    except:
+        peer_codes = []
+
+    if not peer_codes:
+        return {"error": "无法获取同行业个股列表"}
+
+    peer_codes = list(dict.fromkeys(peer_codes))[:max_stocks]  # 去重 + 限制数量
+
+    # 3. 腾讯批量行情拉PE/PB
+    prefixed = []
+    for c in peer_codes:
+        if c.startswith(("6", "9")):
+            prefixed.append(f"sh{c}")
+        elif c.startswith("8"):
+            prefixed.append(f"bj{c}")
+        else:
+            prefixed.append(f"sz{c}")
+
+    url = "https://qt.gtimg.cn/q=" + ",".join(prefixed)
+    req = urllib.request.Request(url)
+    req.add_header("User-Agent", "Mozilla/5.0")
+    resp = urllib.request.urlopen(req, timeout=10)
+    data = resp.read().decode("gbk")
+
+    peers = []
+    for line in data.strip().split(";"):
+        if not line.strip() or "=" not in line or '"' not in line:
+            continue
+        key = line.split("=")[0].split("_")[-1]
+        vals = line.split('"')[1].split("~")
+        if len(vals) < 53:
+            continue
+        c = key[2:]
+        pe = float(vals[39]) if vals[39] else 0
+        pb = float(vals[46]) if vals[46] else 0
+        name = vals[1]
+        mcap = float(vals[44]) if vals[44] else 0
+        price = float(vals[3]) if vals[3] else 0
+        change_pct = float(vals[32]) if vals[32] else 0
+        if pe > 0:
+            peers.append({
+                "code": c, "name": name, "price": price,
+                "pe": pe, "pb": pb, "mcap": mcap,
+                "change_pct": change_pct,
+                "is_target": c == code,
+            })
+
+    if not peers:
+        return {"error": "无有效PE数据"}
+
+    df = pd.DataFrame(peers)
+
+    # 4. 计算行业均值/中位数
+    pe_mean = round(df['pe'].mean(), 1)
+    pe_median = round(df['pe'].median(), 1)
+    pb_mean = round(df['pb'].mean(), 2)
+    pb_median = round(df['pb'].median(), 2)
+
+    # 5. 目标股排名
+    target = next((p for p in peers if p['is_target']), None)
+    pe_rank = sorted(peers, key=lambda x: x['pe']).index(target) + 1 if target else None
+
+    return {
+        "industry": industry_name,
+        "peer_count": len(peers),
+        "pe_mean": pe_mean,
+        "pe_median": pe_median,
+        "pb_mean": pb_mean,
+        "pb_median": pb_median,
+        "target": target,
+        "pe_rank": f"{pe_rank}/{len(peers)}" if pe_rank else None,
+        "pe_vs_median": f"{((target['pe'] / pe_median - 1) * 100):+.1f}%" if target else None,
+        "peers_sorted_by_pe": sorted(peers, key=lambda x: x['pe']),
+    }
+
+# 用法
+comp = industry_pe_pb_comparison("000537", "电力")
+if "error" not in comp:
+    t = comp['target']
+    print(f"\n{t['name']}({t['code']}): PE={t['pe']:.1f} PB={t['pb']:.2f}")
+    print(f"行业PE均值={comp['pe_mean']} 中位数={comp['pe_median']} 排名={comp['pe_rank']}")
+    print(f"相对行业PE中位数: {comp['pe_vs_median']}")
+    print(f"\n同行业PE排名:")
+    for p in comp['peers_sorted_by_pe']:
+        marker = " ★" if p['is_target'] else ""
+        print(f"  {p['code']} {p['name']}: PE={p['pe']:.1f} PB={p['pb']:.2f} 市值={p['mcap']:.0f}亿{marker}")
+```
+
+> **数据源选择：** 同行业个股列表优先走百度概念板块（零鉴权、稳定），东财 `stock_board_industry_cons_em` 走 push2 域名可能被代理拦截。同花顺行业成分暂无直接 API，`stock_board_industry_index_ths` 返回的是行业K线而非个股列表。
+
+---
+
+## Layer 8: 公告层
 
 ### 5.1 巨潮公告（akshare → cninfo）
 
@@ -581,7 +1450,7 @@ text = client.F10(symbol='688017', name='最新提示')
 
 ---
 
-## Layer 6: 信号层（V2 新增 + V2.1 大幅扩展）
+## Layer 9: 信号层（V2 新增 + V2.1 大幅扩展）
 
 ### 6.1 同花顺热点 — 当日强势股 + 题材归因 reason tags（独家）
 
@@ -1379,7 +2248,7 @@ for a in all_articles[:10]:
             print(f"  {stock_code}: 东财 {len(em)} 篇")
 ```
 
-### 流程 D: 新标的快速调研（V2.1 增强版）
+### 流程 D: 新标的快速调研（V2.2 增强版）
 
 ```python
 code = "688017"
@@ -1396,21 +2265,38 @@ print(f"PE={q['pe_ttm']} PB={q['pb']} 市值={q['mcap_yi']}亿")
 # 3. PE消化 → 用 full_valuation()
 # 4. PEG校验
 
-# 5. V2.1: 概念板块归属
+# 5. V2.2: 近3年财务趋势（判断增长质量）
+trend = financial_trend(code, 3)
+for t in trend:
+    print(f"  {t['date']}: 营收={t['revenue']}(+{t['revenue_yoy']}) 净利={t['net_profit']}(+{t['net_profit_yoy']})")
+
+# 6. V2.2: 技术面（判断买卖时机）
+tech = technical_analysis(code)
+print(f"  MA20={tech['ma20']} MA60={tech['ma60']} RSI={tech['rsi14']}")
+print(f"  信号: {tech['trend_signal']}")
+
+# 7. V2.1: 概念板块归属
 blocks = baidu_concept_blocks(code)
 print(f"概念: {', '.join(blocks['concept_tags'][:10])}")
 
-# 6. V2.1: 资金流向
+# 8. V2.2: 同行业PE/PB对比（判断在同行中贵不贵）
+comp = industry_pe_pb_comparison(code)
+if "error" not in comp:
+    t = comp['target']
+    print(f"  行业PE均值={comp['pe_mean']} 中位数={comp['pe_median']} 排名={comp['pe_rank']}")
+    print(f"  相对中位数: {comp['pe_vs_median']}")
+
+# 9. V2.1: 资金流向
 flow = baidu_fund_flow_history(code)
 if flow:
     recent = flow[0]
     print(f"最近主力净流入: {recent['mainIn']}万")
 
-# 7. V2.1: 龙虎榜
+# 10. V2.1: 龙虎榜
 dtb = dragon_tiger_board(code, "2026-05-12")
 print(f"近30日上龙虎榜: {len(dtb['records'])} 次")
 
-# 8. V2.1: 解禁预警
+# 11. V2.1: 解禁预警
 lockup = lockup_expiry(code, "2026-05-12")
 print(f"未来90天待解禁: {len(lockup['upcoming'])} 批")
 ```
@@ -1422,15 +2308,18 @@ print(f"未来90天待解禁: {len(lockup['upcoming'])} 批")
 | 优先级 | 数据源 | 用途 | 可靠性 | 封IP风险 |
 |--------|--------|------|--------|---------|
 | 1 | **mootdx** (TCP) | K线+五档盘口+逐笔成交+财务快照+F10 | 极稳定 | 极低 |
-| 2 | **腾讯财经** (HTTP) | 实时PE/PB/市值/换手率/涨跌停 | 稳定 | 低 |
-| 3 | **akshare** (Python) | 研报+一致预期+新闻+公告+龙虎榜+解禁+行业 | 稳定 | 中(东财源) |
+| 2 | **腾讯财经** (HTTP) | 实时PE/PB/市值/换手率/涨跌停+批量同行估值 | 稳定 | 低 |
+| 3 | **akshare** (Python) | 研报+一致预期+新闻+公告+龙虎榜+解禁+行业+财务趋势 | 稳定 | 中(东财源) |
 | 4 | **iwencai** (OpenAPI) | NL主题搜索研报(唯一能力) | 需X-Claw Header | 低 |
 | 5 | **东财PDF** (HTTP) | 完整研报图表、评级 | 稳定但需下载 | 低 |
 | 6 | **同花顺热点** (HTTP) | 当日强势股+题材归因 reason tags | 稳定 73ms | 极低（零鉴权） |
 | 7 | **同花顺 hsgtApi** (HTTP) | 北向资金分钟级+自缓存历史 | 稳定 | 极低（零鉴权） |
-| 8 | **百度股市通** (HTTP) | 概念板块+个股资金流向 | 稳定 | 极低（零鉴权） |
+| 8 | **百度股市通** (HTTP) | 概念板块+个股资金流向+同行股票列表 | 稳定 | 极低（零鉴权） |
+| 9 | **同花顺 THS** (HTTP) | 财务摘要多期+行业名称/信息 | 稳定 | 极低 |
+| 10 | **stockstats** (Python) | MA/MACD/RSI/BOLL技术指标计算 | 本地计算 | 无 |
+| 11 | **筹码分布** (本地计算) | 获利盘/套牢盘/平均成本/抛压支撑/资金流向 | 本地计算+mootdx+akshare | 无 |
 
-**原则：** 行情走 mootdx+腾讯（不封IP），研报走 akshare+东财PDF，iwencai 仅用于 NL 主题搜索，**信号层走同花顺+百度直连接口（零鉴权 + 编辑部人工运营 tags + 分钟级资金流向）**。
+**原则：** 行情走 mootdx+腾讯（不封IP），研报走 akshare+东财PDF，iwencai 仅用于 NL 主题搜索，**信号层走同花顺+百度直连接口（零鉴权 + 编辑部人工运营 tags + 分钟级资金流向）**，**财务趋势走同花顺 THS，技术面走 mootdx K线 + stockstats 本地计算，筹码分布走 mootdx K线 + 指数衰减算法 + akshare资金流向，行业估值走同花顺行业列表 + 腾讯批量行情**。
 
 ---
 
@@ -1489,6 +2378,15 @@ A: mootdx 走 TCP 直连通达信行情服务器，需国内 IP 才稳定。海�
 
 ### Q: 不用 Claude Code，能用吗？
 A: 能。SKILL.md 本质是 Markdown + 内嵌 Python 代码。Codex、OpenClaw 或任何 AI 编程助手都能读取。你也可以直接把 Python 代码段复制出来在自己的脚本里跑。
+
+### Q: 筹码分布能查吗？
+A: **能（V2.3 新增）**。使用 `chip_distribution()` 函数，基于 mootdx 250根日K线 + 指数衰减算法（60日半衰期）在本地计算筹码分布，可输出获利盘/套牢盘比例、平均成本、90%集中区、上方抛压/下方支撑、筹码分布图。同时 `fund_flow_analysis()` 聚合 akshare 资金流向数据，`chip_and_fund_analysis()` 一次调用完成双维度联合分析。注意：算法为近似实现，与通达信客户端结果在大方向一致但具体价位占比可能有差异。
+
+### Q: stock_profit_sheet_by_report_em 报错 NoneType？
+A: 已知 bug。该接口依赖东财页面的 `hidctype` 元素，部分股票页面结构变更导致解析失败。**改用 `stock_financial_abstract_ths`（同花顺源）**，更稳定且含多期趋势数据。
+
+### Q: 东财行业接口（push2域名）连不上？
+A: push2.eastmoney.com 走 HTTPS + CDN，部分代理环境会阻断。**替代方案**：(1) 同花顺行业接口 `stock_board_industry_name_ths` + `stock_board_industry_info_ths` 不受影响；(2) 腾讯批量行情 + 百度概念板块可组合实现同行业PE/PB对比。
 
 ---
 
